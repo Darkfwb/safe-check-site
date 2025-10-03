@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Trust Checker</title>
+  <style>
+    body{font-family:Arial;margin:20px}
+    .card{max-width:700px;padding:16px;background:#fff;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+    input{width:70%;padding:8px}
+    button{padding:8px 12px;margin-left:8px}
+    pre{white-space:pre-wrap;background:#f6f6f6;padding:10px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Quick Trust Checker</h2>
+    <p id="info">Нажми кнопку в закладках (bookmarklet) на сайте, который хочешь проверить — он откроет эту страницу и передаст URL.</p>
+
+    <div>
+      <input id="url" placeholder="Сюда попадёт URL от bookmarklet" />
+      <button id="go">Проверить</button>
+    </div>
+
+    <div id="out" style="margin-top:12px"></div>
+  </div>
+
+<script>
+async function checkUrl(url) {
+  const out = document.getElementById('out');
+  out.innerHTML = 'Проверяю…';
+  try {
+    const resp = await fetch('http://localhost:3000/api/check-url', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ url })
+    });
+    const data = await resp.json();
+    if (data.error) {
+      out.innerHTML = '<div style="color:red">Ошибка: ' + data.error + '</div>';
+      return;
+    }
+    out.innerHTML = '<div>Результат:</div>';
+    out.innerHTML += '<pre>Safe: ' + data.safe + '\\n Message: ' + data.message + '</pre>';
+  } catch (e) {
+    out.innerHTML = '<div style="color:red">Сетевая ошибка: ' + e.message + '</div>';
+  }
+}
+
+document.getElementById('go').addEventListener('click', () => {
+  const u = document.getElementById('url').value.trim();
+  if (u) checkUrl(u);
+});
+
+const params = new URLSearchParams(location.search);
+if (params.has('checkurl')) {
+  const u = params.get('checkurl');
+  document.getElementById('url').value = u;
+
+}
+</script>
+</body>
+</html>
